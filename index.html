@@ -75,6 +75,67 @@
     .brand-logo{width:140px}
   }
 
+
+/* --- Mobile Optimierung --- */
+@media (max-width: 720px){
+  .wrap{padding:14px !important}
+  header{position:sticky;top:0;z-index:50;background:rgba(247,250,252,.92);backdrop-filter:saturate(1.2) blur(6px);padding:10px 0;margin-bottom:10px}
+  .brandbar{margin-bottom:6px !important}
+  .brand-left{gap:10px !important}
+  .brand-logo{width:120px !important;max-width:55vw !important}
+  h1{font-size:20px !important;line-height:1.15}
+  .controls{gap:8px !important}
+  button{font-size:16px !important; padding:12px 14px !important}
+  .tab{padding:10px 12px !important; font-size:15px !important}
+  .tabs{overflow:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .card{padding:16px !important; border-radius:16px !important}
+  .qtext{font-size:20px !important}
+  .answer{padding:14px 14px !important; border-radius:14px !important}
+  .badge{font-size:12px !important}
+  .explain{font-size:16px !important}
+  /* Editor: Tabelle scrollbar */
+  table{display:block; overflow:auto; -webkit-overflow-scrolling:touch}
+  thead, tbody, tr{display:table; width:100%; table-layout:fixed}
+  td input[type="text"]{min-width:220px}
+}
+/* Sticky Bottom Bar für Quiz-Navigation */
+.quiz-bottombar{
+  position: sticky;
+  bottom: 0;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+
+/* --- One-Hand-Modus (sehr große Touch-Ziele) --- */
+@media (max-width: 720px){
+  .answers{gap:12px !important}
+  .answer{
+    width:100% !important;
+    justify-content:flex-start !important;
+    font-size:17px !important;
+    line-height:1.25 !important;
+    padding:16px 14px !important;
+  }
+  .answer .badge{flex:0 0 auto}
+  .controls button,
+  button.primary,
+  button.ghost,
+  button.danger{
+    width:100% !important;
+    justify-content:center !important;
+  }
+  .controls{flex-direction:column !important; align-items:stretch !important}
+  .quiz-bottombar{padding-bottom: max(12px, env(safe-area-inset-bottom)) !important}
+  .quiz-bottombar button{padding:14px 14px !important; font-size:17px !important}
+  /* Tabs: nur Quiz sichtbar, Editor wird per JS verborgen */
+  .tabs{gap:6px !important}
+}
+
 </style>
 </head>
 <body>
@@ -855,6 +916,71 @@ function splitCSVLine(line){
 }
 function escapeHTML(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 </script>
+
+<script>
+(function(){
+  const MOBILE_MAX = 720;
+
+  function isMobile(){
+    return Math.min(window.innerWidth, window.screen.width) <= MOBILE_MAX;
+  }
+
+  function setEditorVisible(visible){
+    const tabEditor = document.getElementById('tab-editor');
+    const panelEditor = document.getElementById('panel-editor');
+    if(tabEditor) tabEditor.style.display = visible ? '' : 'none';
+    if(panelEditor && !visible) panelEditor.classList.add('hidden');
+  }
+
+  function applyKiosk(){
+    const wantAdmin = (location.hash || '').toLowerCase().includes('admin') || localStorage.getItem('ypso_admin') === '1';
+    if(isMobile() && !wantAdmin){
+      setEditorVisible(false);
+    }else{
+      setEditorVisible(true);
+    }
+  }
+
+  // Long-press on the logo badge to toggle Admin on mobile (2s)
+  function setupLongPress(){
+    const badge = document.querySelector('.logo-badge');
+    if(!badge) return;
+    let t=null;
+
+    const start = (e)=>{
+      if(!isMobile()) return;
+      // prevent accidental text selection
+      e.preventDefault();
+      t = setTimeout(()=>{
+        const now = localStorage.getItem('ypso_admin') === '1';
+        if(now){
+          localStorage.removeItem('ypso_admin');
+          location.hash = '';
+          alert('Admin-Modus AUS (Editor verborgen).');
+        }else{
+          localStorage.setItem('ypso_admin','1');
+          location.hash = '#admin';
+          alert('Admin-Modus AN (Editor sichtbar).');
+        }
+        applyKiosk();
+      }, 2000);
+    };
+    const end = ()=>{ if(t){ clearTimeout(t); t=null; } };
+
+    badge.addEventListener('touchstart', start, {passive:false});
+    badge.addEventListener('touchend', end);
+    badge.addEventListener('touchcancel', end);
+    badge.addEventListener('mousedown', start);
+    badge.addEventListener('mouseup', end);
+    badge.addEventListener('mouseleave', end);
+  }
+
+  window.addEventListener('resize', applyKiosk);
+  window.addEventListener('hashchange', applyKiosk);
+  window.addEventListener('load', ()=>{ setupLongPress(); applyKiosk(); });
+})();
+</script>
+
 </body>
 </html>
 
