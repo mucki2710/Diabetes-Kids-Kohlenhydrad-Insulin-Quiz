@@ -695,8 +695,7 @@ function detectDelimiter(headerLine){
   return semis>commas ? ';' : ',';
 }
 function parseCSVFlexible(text){
-  const lines = text.replace(//g,'').split('
-').filter(l=>l.trim()!=='');
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
   if(!lines.length) return [];
   const delim = detectDelimiter(lines[0]);
   const split = (line)=> splitCSVLineWithDelim(line, delim);
