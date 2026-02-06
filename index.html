@@ -71,12 +71,42 @@
     .poolbar{gap:8px}
     .pill{font-size:12.5px;padding:5px 8px}
   }
+
+  /* --- Branding (Kreiskliniken Reutlingen) --- */
+  .brandbar{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+  .brand-left{display:flex;gap:12px;align-items:flex-start;min-width:min(560px,100%)}
+  .brand-logo{width:170px;max-width:46vw;height:auto;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(2,6,23,.08))}
+  .brand-text{line-height:1.2}
+  .brand-name{font-weight:900;color:#064e3b}
+  .brand-role{color:var(--muted);font-weight:800}
+  .brand-org{color:#065f46;font-weight:900}
+  .brand-meta{color:var(--muted);font-weight:700}
+  @media (max-width:720px){
+    .brandbar{gap:10px;margin-bottom:8px}
+    .brand-logo{width:140px}
+    .brand-text{font-size:13px}
+    .brand-name{font-size:14px}
+  }
+
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <h1>🍎 Kohlenhydrat-Quiz – Essen &amp; Insulin <span class="pill" id="unitPill">Anzeige: KE (10 g)</span></h1>
+    
+    <div class="brandbar" aria-label="Absender">
+      <div class="brand-left">
+        <img class="brand-logo" src="logo-reutlingen.png" alt="Kreiskliniken Reutlingen – Logo">
+        <div class="brand-text">
+          <div class="brand-name">Dr. med. Tina Muckenhaupt</div>
+          <div class="brand-role">Fachärztin · Leitung Diabeteszentrum</div>
+          <div class="brand-org">Kreiskliniken Reutlingen</div>
+          <div class="brand-meta">Funktionsoberärztin für Kinder- und Jugendmedizin · DDG Diabetologin</div>
+        </div>
+      </div>
+    </div>
+
+<h1>🍎 Kohlenhydrat-Quiz – Essen &amp; Insulin <span class="pill" id="unitPill">Anzeige: KE (10 g)</span></h1>
     <div class="sub">Zwei Fragen pro Lebensmittel – <b>Wie viele Kohlenhydrate?</b> und <b>Wie viel Insulin?</b> • (Lernspiel, keine medizinische Anordnung)</div>
 
     <div class="toolbar">
