@@ -680,15 +680,20 @@ boot();
 </script>
 
 <script>
-(function(){
+document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('brandToggle');
-  if(!btn) return;
-  btn.addEventListener('click', ()=>{
+  if (!btn) return;
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
     const bar = btn.closest('.brandbar');
-    bar.classList.toggle('show-extra');
+    if (bar) {
+      bar.classList.toggle('show-extra');
+    }
   });
-})();
+});
 </script>
+
 
 </body>
 </html>
