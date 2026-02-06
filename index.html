@@ -120,6 +120,14 @@
     .brandbar.show-extra .brand-extra{display:block}
   }
 
+
+  /* Toggle override: show hidden lines when expanded */
+  @media (max-width:720px){
+    .brandbar.show-extra .brand-role,
+    .brandbar.show-extra .brand-org,
+    .brandbar.show-extra .brand-meta{display:block !important}
+  }
+
 </style>
 </head>
 <body>
@@ -680,20 +688,24 @@ boot();
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function(){
   const btn = document.getElementById('brandToggle');
-  if (!btn) return;
-
-  btn.addEventListener('click', function (e) {
+  if(!btn) return;
+  const bar = btn.closest('.brandbar');
+  const setState = ()=>{
+    const open = bar && bar.classList.contains('show-extra');
+    btn.textContent = open ? '✕' : 'ℹ️';
+    btn.setAttribute('aria-label', open ? 'Info ausblenden' : 'Info einblenden');
+  };
+  btn.addEventListener('click', function(e){
     e.preventDefault();
-    const bar = btn.closest('.brandbar');
-    if (bar) {
-      bar.classList.toggle('show-extra');
-    }
+    if(!bar) return;
+    bar.classList.toggle('show-extra');
+    setState();
   });
+  setState();
 });
 </script>
-
 
 </body>
 </html>
