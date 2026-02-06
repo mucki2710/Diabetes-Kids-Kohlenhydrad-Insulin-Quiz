@@ -136,6 +136,28 @@
   .tabs{gap:6px !important}
 }
 
+
+/* --- Handy: Header kompakt + Floating Start --- */
+@media (max-width: 720px){
+  .brand-meta, .brand-role{display:none !important;} /* Details ausblenden */
+  .brand-org{font-size:14px !important}
+  .brand-name{font-size:16px !important}
+  .brand-text{line-height:1.15 !important}
+  .brandbar{margin-bottom:4px !important}
+}
+.fab-start{
+  position: fixed;
+  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 9999;
+  border-radius: 999px;
+  padding: 14px 18px;
+  box-shadow: 0 12px 30px rgba(2,6,23,.18);
+}
+@media (min-width: 721px){
+  .fab-start{display:none !important;}
+}
+
 </style>
 </head>
 <body>
@@ -978,6 +1000,51 @@ function escapeHTML(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'
   window.addEventListener('resize', applyKiosk);
   window.addEventListener('hashchange', applyKiosk);
   window.addEventListener('load', ()=>{ setupLongPress(); applyKiosk(); });
+})();
+</script>
+
+
+<script>
+(function(){
+  function onMobile(){ return Math.min(window.innerWidth, window.screen.width) <= 720; }
+
+  function ensureFab(){
+    if(!onMobile()) return;
+    if(document.getElementById('fabStart')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'fabStart';
+    btn.className = 'primary fab-start';
+    btn.type = 'button';
+    btn.textContent = 'Start ▶';
+    btn.addEventListener('click', ()=>{
+      try{
+        if(typeof start === 'function'){ start(); }
+        // nach Start: Button ausblenden
+        btn.style.display='none';
+        // etwas nach unten scrollen, falls Header viel Platz nimmt
+        setTimeout(()=>{ 
+          const panel = document.querySelector('#panel-quiz, #panelQuiz, .card'); 
+          if(panel && panel.scrollIntoView){ panel.scrollIntoView({behavior:'smooth', block:'start'}); }
+        }, 150);
+      }catch(e){ console.warn(e); }
+    });
+
+    document.body.appendChild(btn);
+  }
+
+  // Wenn die Seite geladen ist und (noch) kein Quiz läuft, zeig den Button.
+  window.addEventListener('load', ()=>{ 
+    ensureFab();
+    // wenn der Nutzer bereits mitten im Quiz ist, kann man den Button ausblenden:
+    setTimeout(()=>{ 
+      const q = document.querySelector('#quiz, #quizArea'); 
+      const intro = document.querySelector('#intro'); 
+      if(q && !q.classList.contains('hidden')){ const b=document.getElementById('fabStart'); if(b) b.style.display='none'; }
+      // falls nur Intro sichtbar, Button bleibt.
+    }, 300);
+  });
+  window.addEventListener('resize', ensureFab);
 })();
 </script>
 
