@@ -76,86 +76,41 @@
   }
 
 
-/* --- Mobile Optimierung --- */
+/* --- Kids-Handy-Modus: nur Quiz, keine Editor-Funktionen --- */
 @media (max-width: 720px){
-  .wrap{padding:14px !important}
-  header{position:sticky;top:0;z-index:50;background:rgba(247,250,252,.92);backdrop-filter:saturate(1.2) blur(6px);padding:10px 0;margin-bottom:10px}
-  .brandbar{margin-bottom:6px !important}
-  .brand-left{gap:10px !important}
-  .brand-logo{width:120px !important;max-width:55vw !important}
-  h1{font-size:20px !important;line-height:1.15}
-  .controls{gap:8px !important}
-  button{font-size:16px !important; padding:12px 14px !important}
-  .tab{padding:10px 12px !important; font-size:15px !important}
-  .tabs{overflow:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none}
-  .tabs::-webkit-scrollbar{display:none}
-  .card{padding:16px !important; border-radius:16px !important}
+  .wrap{padding:12px !important}
+  /* Kein großer Absenderblock auf Handy */
+  .brandbar{display:none !important}
+  /* Tabs/Editor ausblenden */
+  .tabs{display:none !important}
+  #panel-editor{display:none !important}
+  /* Kompakter Header */
+  header{position:static !important; background:transparent !important; backdrop-filter:none !important; padding:0 !important}
+  h1{font-size:20px !important; line-height:1.15}
+  .card{padding:14px !important}
   .qtext{font-size:20px !important}
-  .answer{padding:14px 14px !important; border-radius:14px !important}
-  .badge{font-size:12px !important}
-  .explain{font-size:16px !important}
-  /* Editor: Tabelle scrollbar */
-  table{display:block; overflow:auto; -webkit-overflow-scrolling:touch}
-  thead, tbody, tr{display:table; width:100%; table-layout:fixed}
-  td input[type="text"]{min-width:220px}
-}
-/* Sticky Bottom Bar für Quiz-Navigation */
-.quiz-bottombar{
-  position: sticky;
-  bottom: 0;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-  margin-top: 10px;
+  .answer{padding:12px 12px !important}
+  button{padding:10px 12px !important; font-size:16px !important}
+  /* Editor/Export/Import Controls sicherheitshalber aus */
+  #btnAdd,#btnSaveLocal,#btnLoadLocal,#btnExportJSON,#btnExportCSV,#importJSON,#importCSV,#filter,#questionsPerRound,#tableWrap{display:none !important}
+  /* Status oben kleiner */
+  .pill{font-size:13px}
 }
 
-
-/* --- One-Hand-Modus (sehr große Touch-Ziele) --- */
+/* Floating Start-Button (nur Handy): immer sichtbar */
+.kids-fab{
+  display:none;
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  z-index:9999;
+  border-radius:999px;
+  padding:12px 14px;
+  font-weight:900;
+  box-shadow:0 12px 28px rgba(2,6,23,.22);
+}
 @media (max-width: 720px){
-  .answers{gap:12px !important}
-  .answer{
-    width:100% !important;
-    justify-content:flex-start !important;
-    font-size:17px !important;
-    line-height:1.25 !important;
-    padding:16px 14px !important;
-  }
-  .answer .badge{flex:0 0 auto}
-  .controls button,
-  button.primary,
-  button.ghost,
-  button.danger{
-    width:100% !important;
-    justify-content:center !important;
-  }
-  .controls{flex-direction:column !important; align-items:stretch !important}
-  .quiz-bottombar{padding-bottom: max(12px, env(safe-area-inset-bottom)) !important}
-  .quiz-bottombar button{padding:14px 14px !important; font-size:17px !important}
-  /* Tabs: nur Quiz sichtbar, Editor wird per JS verborgen */
-  .tabs{gap:6px !important}
-}
-
-
-/* --- Handy: Header kompakt + Floating Start --- */
-@media (max-width: 720px){
-  .brand-meta, .brand-role{display:none !important;} /* Details ausblenden */
-  .brand-org{font-size:14px !important}
-  .brand-name{font-size:16px !important}
-  .brand-text{line-height:1.15 !important}
-  .brandbar{margin-bottom:4px !important}
-}
-.fab-start{
-  position: fixed;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  z-index: 9999;
-  border-radius: 999px;
-  padding: 14px 18px;
-  box-shadow: 0 12px 30px rgba(2,6,23,.18);
-}
-@media (min-width: 721px){
-  .fab-start{display:none !important;}
+  .kids-fab{display:inline-flex !important; align-items:center; gap:8px}
 }
 
 </style>
@@ -939,112 +894,43 @@ function splitCSVLine(line){
 function escapeHTML(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 </script>
 
+<button class="primary kids-fab" id="kidsFabStart" type="button" aria-label="Quiz starten">▶ Start</button>
 <script>
 (function(){
-  const MOBILE_MAX = 720;
+  function isMobile(){ return Math.min(window.innerWidth, window.screen.width) <= 720; }
 
-  function isMobile(){
-    return Math.min(window.innerWidth, window.screen.width) <= MOBILE_MAX;
+  function clickStart(){
+    // Prefer existing start buttons if present
+    const b1 = document.getElementById('btnStart2') || document.getElementById('btnStart');
+    if(b1){ b1.click(); }
+    // Ensure quiz area becomes visible (in case intro got stuck)
+    const intro = document.getElementById('intro');
+    const quiz = document.getElementById('quiz');
+    if(quiz){ quiz.classList.remove('hidden'); }
+    if(intro && quiz){ /* keep intro if quiz not initialized */ }
+    // scroll into view
+    const panelQuiz = document.getElementById('panel-quiz');
+    if(panelQuiz) panelQuiz.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
-  function setEditorVisible(visible){
+  // Hide editor tab/panel via JS too (robust)
+  function applyKidsMode(){
+    if(!isMobile()) return;
     const tabEditor = document.getElementById('tab-editor');
     const panelEditor = document.getElementById('panel-editor');
-    if(tabEditor) tabEditor.style.display = visible ? '' : 'none';
-    if(panelEditor && !visible) panelEditor.classList.add('hidden');
+    if(tabEditor) tabEditor.style.display = 'none';
+    if(panelEditor) panelEditor.style.display = 'none';
+    const tabQuiz = document.getElementById('tab-quiz');
+    if(tabQuiz){ tabQuiz.setAttribute('aria-selected','true'); }
   }
 
-  function applyKiosk(){
-    const wantAdmin = (location.hash || '').toLowerCase().includes('admin') || localStorage.getItem('ypso_admin') === '1';
-    if(isMobile() && !wantAdmin){
-      setEditorVisible(false);
-    }else{
-      setEditorVisible(true);
-    }
-  }
-
-  // Long-press on the logo badge to toggle Admin on mobile (2s)
-  function setupLongPress(){
-    const badge = document.querySelector('.logo-badge');
-    if(!badge) return;
-    let t=null;
-
-    const start = (e)=>{
-      if(!isMobile()) return;
-      // prevent accidental text selection
-      e.preventDefault();
-      t = setTimeout(()=>{
-        const now = localStorage.getItem('ypso_admin') === '1';
-        if(now){
-          localStorage.removeItem('ypso_admin');
-          location.hash = '';
-          alert('Admin-Modus AUS (Editor verborgen).');
-        }else{
-          localStorage.setItem('ypso_admin','1');
-          location.hash = '#admin';
-          alert('Admin-Modus AN (Editor sichtbar).');
-        }
-        applyKiosk();
-      }, 2000);
-    };
-    const end = ()=>{ if(t){ clearTimeout(t); t=null; } };
-
-    badge.addEventListener('touchstart', start, {passive:false});
-    badge.addEventListener('touchend', end);
-    badge.addEventListener('touchcancel', end);
-    badge.addEventListener('mousedown', start);
-    badge.addEventListener('mouseup', end);
-    badge.addEventListener('mouseleave', end);
-  }
-
-  window.addEventListener('resize', applyKiosk);
-  window.addEventListener('hashchange', applyKiosk);
-  window.addEventListener('load', ()=>{ setupLongPress(); applyKiosk(); });
-})();
-</script>
-
-
-<script>
-(function(){
-  function onMobile(){ return Math.min(window.innerWidth, window.screen.width) <= 720; }
-
-  function ensureFab(){
-    if(!onMobile()) return;
-    if(document.getElementById('fabStart')) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'fabStart';
-    btn.className = 'primary fab-start';
-    btn.type = 'button';
-    btn.textContent = 'Start ▶';
-    btn.addEventListener('click', ()=>{
-      try{
-        if(typeof start === 'function'){ start(); }
-        // nach Start: Button ausblenden
-        btn.style.display='none';
-        // etwas nach unten scrollen, falls Header viel Platz nimmt
-        setTimeout(()=>{ 
-          const panel = document.querySelector('#panel-quiz, #panelQuiz, .card'); 
-          if(panel && panel.scrollIntoView){ panel.scrollIntoView({behavior:'smooth', block:'start'}); }
-        }, 150);
-      }catch(e){ console.warn(e); }
-    });
-
-    document.body.appendChild(btn);
-  }
-
-  // Wenn die Seite geladen ist und (noch) kein Quiz läuft, zeig den Button.
-  window.addEventListener('load', ()=>{ 
-    ensureFab();
-    // wenn der Nutzer bereits mitten im Quiz ist, kann man den Button ausblenden:
-    setTimeout(()=>{ 
-      const q = document.querySelector('#quiz, #quizArea'); 
-      const intro = document.querySelector('#intro'); 
-      if(q && !q.classList.contains('hidden')){ const b=document.getElementById('fabStart'); if(b) b.style.display='none'; }
-      // falls nur Intro sichtbar, Button bleibt.
-    }, 300);
+  window.addEventListener('load', ()=>{
+    applyKidsMode();
+    const fab = document.getElementById('kidsFabStart');
+    if(fab) fab.addEventListener('click', clickStart);
+    // If user already loaded CSV and is stuck on intro, keep start always available
   });
-  window.addEventListener('resize', ensureFab);
+  window.addEventListener('resize', applyKidsMode);
 })();
 </script>
 
