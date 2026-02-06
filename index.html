@@ -76,42 +76,36 @@
   }
 
 
-/* --- Kids-Handy-Modus: nur Quiz, keine Editor-Funktionen --- */
+/* === Kids-Mobile-Patch (robust) === */
 @media (max-width: 720px){
-  .wrap{padding:12px !important}
-  /* Kein großer Absenderblock auf Handy */
+  /* keep everything visible, avoid clipping */
+  html, body{height:auto !important; min-height:100% !important; overflow-y:auto !important}
+  .wrap{padding:10px 12px !important}
+
+  /* reduce header footprint */
   .brandbar{display:none !important}
-  /* Tabs/Editor ausblenden */
-  .tabs{display:none !important}
-  #panel-editor{display:none !important}
-  /* Kompakter Header */
-  header{position:static !important; background:transparent !important; backdrop-filter:none !important; padding:0 !important}
-  h1{font-size:20px !important; line-height:1.15}
-  .card{padding:14px !important}
+  header{position:static !important; padding:0 !important; margin-bottom:10px !important; background:transparent !important; backdrop-filter:none !important}
+  h1{font-size:20px !important; line-height:1.15 !important; margin:0 !important}
+  .pill{font-size:12.5px !important; padding:5px 8px !important}
+
+  /* toolbars: wrap nicely */
+  .controls{flex-wrap:wrap !important}
+  .controls > *{flex:0 0 auto}
+  /* make select + repo button same row if possible */
+  .poolbar{display:flex !important; gap:8px !important; align-items:center !important; flex-wrap:nowrap !important}
+  .poolbar select{flex:1 1 auto !important; min-width:0 !important}
+  .poolbar button{white-space:nowrap !important}
+
+  /* make main content single-column */
+  .row{grid-template-columns:1fr !important}
+  .card{padding:14px !important; border-radius:16px !important}
   .qtext{font-size:20px !important}
-  .answer{padding:12px 12px !important}
-  button{padding:10px 12px !important; font-size:16px !important}
-  /* Editor/Export/Import Controls sicherheitshalber aus */
-  #btnAdd,#btnSaveLocal,#btnLoadLocal,#btnExportJSON,#btnExportCSV,#importJSON,#importCSV,#filter,#questionsPerRound,#tableWrap{display:none !important}
-  /* Status oben kleiner */
-  .pill{font-size:13px}
+  .answers{gap:10px !important}
+  .answer{padding:12px 12px !important; border-radius:14px !important}
 }
 
-/* Floating Start-Button (nur Handy): immer sichtbar */
-.kids-fab{
-  display:none;
-  position:fixed;
-  right:14px;
-  bottom:14px;
-  z-index:9999;
-  border-radius:999px;
-  padding:12px 14px;
-  font-weight:900;
-  box-shadow:0 12px 28px rgba(2,6,23,.22);
-}
-@media (max-width: 720px){
-  .kids-fab{display:inline-flex !important; align-items:center; gap:8px}
-}
+/* Hide any editor/import/export elements (belt & suspenders) */
+.kids-hide{display:none !important}
 
 </style>
 </head>
@@ -894,43 +888,108 @@ function splitCSVLine(line){
 function escapeHTML(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 </script>
 
-<button class="primary kids-fab" id="kidsFabStart" type="button" aria-label="Quiz starten">▶ Start</button>
+<button class="primary" id="kidsFabStart" type="button"
+  style="display:none;position:fixed;right:14px;bottom:14px;z-index:9999;border-radius:999px;padding:12px 14px;font-weight:900;box-shadow:0 12px 28px rgba(2,6,23,.22);">
+  ▶ Start
+</button>
 <script>
 (function(){
-  function isMobile(){ return Math.min(window.innerWidth, window.screen.width) <= 720; }
+  const MOBILE_MAX = 720;
+
+  function isMobile(){
+    return Math.min(window.innerWidth, window.screen.width) <= MOBILE_MAX;
+  }
+
+  function markHide(el){
+    if(!el) return;
+    el.classList.add('kids-hide');
+  }
+
+  function removeByText(selector, needles){
+    document.querySelectorAll(selector).forEach(el=>{
+      const t = (el.innerText || el.textContent || '').trim().toLowerCase();
+      if(needles.some(n => t.includes(n))){
+        markHide(el);
+      }
+    });
+  }
+
+  function hideEditorExportImport(){
+    // Tabs / Editor panel
+    markHide(document.getElementById('tab-editor'));
+    markHide(document.getElementById('panel-editor'));
+
+    // Any obvious IDs from older versions
+    ['btnAdd','btnSaveLocal','btnLoadLocal','btnExportJSON','btnExportCSV','importJSON','importCSV','filter','questionsPerRound','tableWrap']
+      .forEach(id => markHide(document.getElementById(id)));
+
+    // Hide buttons by label text (works even if created dynamically)
+    removeByText('button', ['fragepool-editor','export json','export csv','import json','import csv','editor']);
+    // Hide file inputs / labels that include import words
+    document.querySelectorAll('input[type="file"]').forEach(inp => markHide(inp));
+    document.querySelectorAll('label').forEach(lab=>{
+      const t=(lab.innerText||'').toLowerCase();
+      if(t.includes('import')) markHide(lab);
+    });
+
+    // Remove any keyboard hint mentioning editor
+    document.querySelectorAll('*').forEach(el=>{
+      const t = (el.innerText||'').toLowerCase();
+      if(t.includes('e = editor') || t.includes('e=editor')) markHide(el);
+    });
+  }
+
+  function enforcePoolBar(){
+    // Find the container that includes "Fragepool" and "Vom Repo laden"
+    const allControls = Array.from(document.querySelectorAll('.controls, .toolbar, .topbar, .bar'));
+    for(const c of allControls){
+      const t = (c.innerText||'').toLowerCase();
+      if(t.includes('fragepool') && (t.includes('repo') || t.includes('laden'))){
+        c.classList.add('poolbar');
+        break;
+      }
+    }
+  }
+
+  function ensureQuizVisible(){
+    // Make sure intro/quiz isn't clipped
+    const panelQuiz = document.getElementById('panel-quiz');
+    if(panelQuiz) panelQuiz.style.display = '';
+    const quiz = document.getElementById('quiz');
+    if(quiz) quiz.classList.remove('hidden');
+  }
 
   function clickStart(){
-    // Prefer existing start buttons if present
-    const b1 = document.getElementById('btnStart2') || document.getElementById('btnStart');
-    if(b1){ b1.click(); }
-    // Ensure quiz area becomes visible (in case intro got stuck)
-    const intro = document.getElementById('intro');
-    const quiz = document.getElementById('quiz');
-    if(quiz){ quiz.classList.remove('hidden'); }
-    if(intro && quiz){ /* keep intro if quiz not initialized */ }
-    // scroll into view
+    const b = document.getElementById('btnStart2') || document.getElementById('btnStart');
+    if(b) b.click();
+    ensureQuizVisible();
     const panelQuiz = document.getElementById('panel-quiz');
     if(panelQuiz) panelQuiz.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
-  // Hide editor tab/panel via JS too (robust)
   function applyKidsMode(){
-    if(!isMobile()) return;
-    const tabEditor = document.getElementById('tab-editor');
-    const panelEditor = document.getElementById('panel-editor');
-    if(tabEditor) tabEditor.style.display = 'none';
-    if(panelEditor) panelEditor.style.display = 'none';
-    const tabQuiz = document.getElementById('tab-quiz');
-    if(tabQuiz){ tabQuiz.setAttribute('aria-selected','true'); }
+    if(!isMobile()){
+      const fab = document.getElementById('kidsFabStart');
+      if(fab) fab.style.display='none';
+      return;
+    }
+    hideEditorExportImport();
+    enforcePoolBar();
+    // show floating start button
+    const fab = document.getElementById('kidsFabStart');
+    if(fab){
+      fab.style.display='inline-flex';
+      fab.style.alignItems='center';
+      fab.style.gap='8px';
+    }
   }
 
   window.addEventListener('load', ()=>{
     applyKidsMode();
     const fab = document.getElementById('kidsFabStart');
     if(fab) fab.addEventListener('click', clickStart);
-    // If user already loaded CSV and is stuck on intro, keep start always available
+    window.addEventListener('resize', applyKidsMode);
   });
-  window.addEventListener('resize', applyKidsMode);
 })();
 </script>
 
